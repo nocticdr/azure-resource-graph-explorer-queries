@@ -5,6 +5,7 @@
 // VM type as "virtualmachine" and a new column is created to simulate VM count as 1 for each VM, named, vm_qty.
 // Finally we concatenate vmss_qty and vm_qty using strcat under a new column called Total, strip away the unnecessary 'working'
 // columns, and summarise the total count by asset type, i.e. VMSS and VM.
+// Subscription ID or tenant ID is not tied in code so as to make it flexible. Add as required.
 
 Resources
 | where type == "microsoft.compute/virtualmachinescalesets" 

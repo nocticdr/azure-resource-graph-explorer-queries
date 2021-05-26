@@ -1,11 +1,11 @@
-// This kusto query (for Azure RGE) will first get all VMSS in selected subscription, manipulate the type name using trim and 
-// substring to only display VMSS type as "scaleset". Column sku.capacity will provide the number of instances in each scale set
-// renamed as vmss_qty column.
+// This kusto query (for Azure RGE) is used to display a donut chart of total VM and VMSS count.
+// First we get all VMSS in selected subscription, manipulate the type name using trim and substring to only display 
+// VMSS type as "scaleset". Column sku.capacity will provide the number of instances in each scale set renamed as vmss_qty column.
 // Next, we concatenate another query for virtual machines using union and also manipulate the type name to only display 
 // VM type as "virtualmachine" and a new column is created to simulate VM count as 1 for each VM, named, vm_qty.
 // Finally we concatenate vmss_qty and vm_qty using strcat under a new column called Total, strip away the unnecessary 'working'
 // columns, and summarise the total count by asset type, i.e. VMSS and VM.
-// Subscription ID or tenant ID is not tied in code so as to make it flexible. Add as required.
+// Subscription ID or tenant ID is not tied in code so as to make it flexible. Add as required. 
 
 Resources
 | where type == "microsoft.compute/virtualmachinescalesets" 

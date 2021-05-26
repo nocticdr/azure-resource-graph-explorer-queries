@@ -1,0 +1,6 @@
+Resources
+| where type == "microsoft.compute/disks"
+| where name notcontains "asrseeddisk"
+| project subscriptionId, name, location, resourceGroup, DiskType = sku.name, DiskSize = properties['diskSizeGB'] 
+| summarize sum(toint(DiskSize)/1024)
+| project TB = sum_

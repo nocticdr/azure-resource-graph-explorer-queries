@@ -1,0 +1,14 @@
+Resources
+| where type == "microsoft.compute/virtualmachinescalesets" 
+| project name, vmss_qty = sku.capacity, type
+| extend type = trim("microsoft.compute/", type)
+| extend type = substring(type, 14, 16)
+| union (
+	Resources | where type == "microsoft.compute/virtualmachines" 
+	| project name, type 
+	| extend vm_qty = toint(1)
+) 
+| extend type = trim("microsoft.compute/", type)
+| extend Total = (strcat(vmss_qty, vm_qty))
+| project-away vmss_qty, vm_qty
+| summarize sum(toint(Total)) by type

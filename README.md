@@ -1,0 +1,1 @@
+# azure-resource-graph-explorer-queries

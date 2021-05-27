@@ -1,4 +1,4 @@
 *.csl linguist-detectable=true
 *.kusto linguist-detectable=true
-*.csl linguist-language=Kusto
-*.kusto linguist-language=Kusto
+*.csl linguist-language=Ked
+*.kusto linguist-language=Ked

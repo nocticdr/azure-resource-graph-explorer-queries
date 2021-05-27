@@ -1,0 +1,2 @@
+*.csl linguist-language=Kusto
+*.kusto linguist-language=Kusto

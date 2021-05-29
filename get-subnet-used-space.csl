@@ -1,0 +1,44 @@
+// Credit to chupark (https://github.com/chupark) for providing this code here:
+// https://github.com/microsoft/AzureMonitorCommunity/tree/master/Azure%20Services/Virtual%20Network/Workbooks/Virtual%20Network%20list
+
+resources
+| where type contains "microsoft.network"
+| where type == "microsoft.network/virtualnetworks"
+| mvexpand subnetProperties = properties['subnets']
+| extend subnetName = subnetProperties['name']
+| extend subnetId = subnetProperties['id']
+| extend subnetPrefix = subnetProperties['properties']['addressPrefix']
+| extend subnetNSG = subnetProperties['properties']['networkSecurityGroup']['id']
+| extend routeTable = subnetProperties['properties']['routeTable']['id']
+| parse subnetPrefix with subnetAddress "/" subnetMask
+| extend parsedSubnetIp = parse_ipv4_mask(subnetAddress, toint(subnetMask))
+| project id, name, tenantId, subscriptionId, subnetName, subnetId, subnetPrefix, subnetNSG, routeTable, parsedSubnetIp, subnetMask, location
+| join kind = leftouter(resources
+| where type contains "microsoft.network"
+| where type == "microsoft.network/virtualnetworks"
+| mvexpand vnetAddressspace = properties['addressSpace']['addressPrefixes']
+| parse vnetAddressspace with vnetAddress "/" mask
+| extend vnetStartIp = parse_ipv4_mask(vnetAddress, toint(mask))
+| extend vnetEndIp = vnetStartIp + pow(2, (32 - toint(mask)))
+| project id, name, tenantId, subscriptionId, vnetAddressspace, vnetStartIp, vnetEndIp) on id
+| extend motherVnet = case((parsedSubnetIp >= vnetStartIp and parsedSubnetIp < vnetEndIp), name, "delete")
+| where motherVnet != "delete"
+| extend totalSubnetAllowedIpCount = toint(pow(2, (32 - toint(subnetMask))) - 5)
+| project id, name, subnetPrefix, tenantId, vnetAddressspace, location, subscriptionId, subnetId = tostring(subnetId), subnetName, subnetNSG, routeTable, totalSubnetAllowedIpCount
+| join kind = inner (resources| where type == "microsoft.network/networkinterfaces"
+| mvexpand nicDetails = properties['ipConfigurations']
+| extend subnet = nicDetails['properties']['subnet']['id']
+| extend privateIp = nicDetails['properties']['privateIPAddress']
+| extend associatedAppGw = nicDetails['properties']['applicationGatewayBackendAddressPools']
+| extend associatedLoadBalancer = nicDetails['properties']['loadBalancerBackendAddressPools']
+| extend associatedVm = properties['virtualMachine']['id']
+| project id, name, tenantId, subscriptionId, location, subnet, privateIp, associatedAppGw, associatedLoadBalancer, associatedVm
+| union (resources| where type == "microsoft.network/loadbalancers"
+| mvexpand frontConf = properties['frontendIPConfigurations']
+| extend frontEndIpConf = frontConf['properties']['subnet']['id']
+| where isnotempty(frontEndIpConf)
+| project name, subnet = frontEndIpConf)
+| summarize usingSubnetIpCount = count() by tostring(subnet)) on $left.subnetId == $right.subnet
+| extend usingSpaces = strcat(tostring(usingSubnetIpCount), "/", tostring(totalSubnetAllowedIpCount))
+| project VNET = name, SUBNET = subnetName, Used_over_Total = usingSpaces
+| order by VNET desc

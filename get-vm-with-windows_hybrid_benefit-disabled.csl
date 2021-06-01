@@ -1,0 +1,6 @@
+// Query to return List of disks that are StandardSSD or PremiumSSD
+Resources
+| where type == 'microsoft.compute/virtualmachines'
+| where properties['storageProfile']['osDisk']['osType'] != "Linux"
+| where properties['licenseType'] != "Windows_Server" and properties['licenseType'] != "Windows_Client"
+| project subscriptionId, name, resourceGroup

@@ -1,0 +1,17 @@
+Resources
+| where type == 'microsoft.compute/virtualmachines'
+| where type == "microsoft.compute/virtualmachines" and tags.Applications startswith "Database"
+| where properties['storageProfile']['imageReference']['id'] contains "sql" or properties['storageProfile']['imageReference']['publisher'] contains "sql"
+| extend
+    JoinID = toupper(id),
+    VMName = tostring(properties.osProfile.computerName)
+| join kind=leftouter(
+    Resources
+    | where type == 'microsoft.compute/virtualmachines/extensions'
+    | extend
+        VMId = toupper(substring(id, 0, indexof(id, '/extensions'))),
+        ExtensionName = name
+) on $left.JoinID == $right.VMId
+| summarize Extensions = make_list(ExtensionName) by id, VMName
+| where Extensions notcontains "sql"
+| project id, SqlStatus = "SQL IaaS Missing"

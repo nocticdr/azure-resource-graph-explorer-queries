@@ -1,0 +1,5 @@
+Resources
+| where type == "microsoft.sqlvirtualmachine/sqlvirtualmachines"
+| where properties['sqlServerLicenseType'] != "AHUB"
+| project subscriptionId, name, resourceGroup
+| where name != "azpatsws01" and name != "qll-microsite"

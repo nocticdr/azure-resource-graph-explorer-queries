@@ -1,0 +1,6 @@
+Resources
+| where type contains "microsoft.compute/virtualmachinescalesets"
+| where properties.virtualMachineProfile.storageProfile.osDisk.managedDisk.storageAccountType notcontains "Standard_LRS"
+| project name, resourceGroup, properties.virtualMachineProfile.storageProfile.osDisk.managedDisk.storageAccountType
+| order by resourceGroup
+

@@ -1,0 +1,5 @@
+Resources
+| where type contains "Microsoft.Compute/snapshots"
+| project name, resourceGroup, sku.name
+| sort by resourceGroup
+| summarize count() by tostring(resourceGroup)
